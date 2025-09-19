@@ -1,9 +1,9 @@
 package model;
 
-public class CoinAcceptor {
+public class MoneyAcceptor {
     private int amount;
 
-    public CoinAcceptor(int amount) {
+    public MoneyAcceptor(int amount) {
         this.amount = amount;
     }
 
@@ -12,6 +12,6 @@ public class CoinAcceptor {
     }
 
     public void setAmount(int amount) {
-        this.amount = amount;
+        this.amount += amount;
     }
 }
