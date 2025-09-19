@@ -27,12 +27,13 @@ public class AppRunner {
 
     public static void run() {
         AppRunner app = new AppRunner();
+        CardPay cardPay = new CardPay(new Card(200));
         while (!isExit) {
-            app.startSimulation();
+            app.startSimulation(cardPay);
         }
     }
 
-    private void startSimulation() {
+    private void startSimulation(CardPay cardPay) {
         print("В автомате доступны:");
         showProducts(products);
 
@@ -40,7 +41,7 @@ public class AppRunner {
 
         UniversalArray<Product> allowProducts = new UniversalArrayImpl<>();
         allowProducts.addAll(getAllowedProducts().toArray());
-        chooseAction(allowProducts);
+        chooseAction(allowProducts, cardPay);
 
     }
 
@@ -54,20 +55,40 @@ public class AppRunner {
         return allowProducts;
     }
 
-    private void chooseAction(UniversalArray<Product> products) {
+    private void chooseAction(UniversalArray<Product> products , CardPay cardPay) {
+
         print(" a - Пополнить баланс");
         showActions(products);
         print(" h - Выйти");
         String action = fromConsole().substring(0, 1);
         if ("a".equalsIgnoreCase(action)) {
-            moneyAcceptor.setAmount(moneyAcceptor.getAmount() + 10);
-            print("Вы пополнили баланс на 10");
-            return;
+            print("Выберите удобный для Вас способ пополнения:");
+            print(" a - Карта\n" +
+                    " b - Монеты");
+            String methodOfReplenishment = fromConsole().substring(0, 1);
+            if ("a".equalsIgnoreCase(methodOfReplenishment)){
+                try {
+                    moneyAcceptor.setAmount(cardPay.payment());
+                    cardPay.cardModel.setBalance(-10);
+                    print("Ваш баланс на карте: " + cardPay.cardModel.getBalance());
+                }catch (NumberFormatException ne){
+                    print(ne.getMessage());
+                }
+                return;
+            } else if("b".equalsIgnoreCase(methodOfReplenishment)){
+                CoinPay coinPay = new CoinPay();
+                moneyAcceptor.setAmount(coinPay.payment());
+                return;
+            } else {
+                print("Недопустимая буква. Попробуйте еще раз.");
+                chooseAction(products, cardPay);
+                return;
+            }
         }
         try {
             for (int i = 0; i < products.size(); i++) {
                 if (products.get(i).getActionLetter().equals(ActionLetter.valueOf(action.toUpperCase()))) {
-                    moneyAcceptor.setAmount(moneyAcceptor.getAmount() - products.get(i).getPrice());
+                    moneyAcceptor.setAmount(- products.get(i).getPrice());
                     print("Вы купили " + products.get(i).getName());
                     break;
                 }
@@ -77,11 +98,9 @@ public class AppRunner {
                 isExit = true;
             } else {
                 print("Недопустимая буква. Попробуйте еще раз.");
-                chooseAction(products);
+                chooseAction(products, cardPay);
             }
         }
-
-
     }
 
     private void showActions(UniversalArray<Product> products) {
